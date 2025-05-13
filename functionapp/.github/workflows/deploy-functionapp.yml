@@ -1,0 +1,35 @@
+name: Deploy Azure Function App (.NET 8 In-Process)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET 8 SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore ./functionapp/functionapp.csproj
+
+    - name: Build project
+      run: dotnet build ./functionapp/functionapp.csproj --configuration Release --no-restore
+
+    - name: Publish project
+      run: dotnet publish ./functionapp/functionapp.csproj --configuration Release --output ./publish --no-build
+
+    - name: Deploy to Azure Function App
+      uses: Azure/functions-action@v1
+      with:
+        app-name: 'holidaychecker-funcapp'
+        package: './publish'
+        publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
